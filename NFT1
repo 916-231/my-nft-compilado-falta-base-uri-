@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.20;
+
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+
+contract Tavo55 is ERC721URIStorage {
+
+    uint256 tokenID;
+    uint256 tokenPrice = 1 ether;
+
+    constructor () ERC721("Tavo55" , "TN" ){}
+
+    function mintNewToken(string memory _tokenURI)public payable returns (uint256) {
+        require(msg.value >= tokenPrice, "Insufficient ether");
+        tokenID++;
+
+        _mint(msg.sender, tokenID);
+        _setTokenURI(tokenID, _tokenURI);
+        uint256 remainder = msg.value - tokenPrice;
+        payable(msg.sender).transfer(remainder);
+
+        return tokenID;
+    }
+}
