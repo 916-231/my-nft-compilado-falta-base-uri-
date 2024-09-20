@@ -1,0 +1,102 @@
+// SPDX-License-Identifier: MIT
+// Compatible with OpenZeppelin Contracts ^5.0.0
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts@5.0.2/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts@5.0.2/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts@5.0.2/token/ERC721/extensions/ERC721Pausable.sol";
+import "@openzeppelin/contracts@5.0.2/access/Ownable.sol";
+
+contract Diamon is ERC721, ERC721Enumerable, ERC721Pausable, Ownable {
+    uint256 private _nextTokenId;
+
+    address[] private _addresses;
+
+    uint256 public immutable maxSupply = 1;
+    bool public publicMintOpen = true;
+    bool public whitwListMintOpen = true;
+
+    mapping (address => bool) public whiteList;
+
+
+    constructor()
+        ERC721("Diamon", "DON")
+        Ownable(msg.sender)
+    {}
+
+    function _baseURI() internal pure override returns (string memory) {
+        return "QmaDkvdgAAEGsUy6G6JPfHmWBkyDgiTaoAwCAm4CAe3BRN";
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+    //le permite a los usuarios que estan en la whitelistmint mintear
+    function whiteListMint( ) external payable{
+        require (whitwListMintOpen,"windows closet");
+        require (whiteList[msg.sender], "you're not in the whitelist");
+        require (msg.value == 0.001 ether,"not anough ether send");
+        
+    }
+    //minteo publico
+    function publicMint() external payable {
+        require (publicMintOpen,"windows closet");
+        require (msg.value == 0.01 ether,"not anough ether send");
+        
+    }
+    //funcion intertna para refactorizar codigo
+    function _internalMint() internal{
+        require (totalSupply ()< maxSupply, "no more NFTs");
+        uint256 tokenId = _nextTokenId++;
+        _safeMint(msg.sender, tokenId);
+    }   
+    
+     function updateMintWindows(bool _publicMintOpen, bool _whitwListMintOpen)external onlyOwner {
+        publicMintOpen = _publicMintOpen;
+        whitwListMintOpen =_whitwListMintOpen;
+    }
+    //agregar addresses a la whitelist
+    function updateWhiteList(address[]memory addresses)external onlyOwner{
+        _addresses = addresses;
+        for (uint256 i; i < _addresses.length; i++)
+    {
+        whiteList[_addresses[i]] = true;
+    }
+    }
+
+    //para retirar fondos de mi contrato
+    function withdraw (address _receiver)external onlyOwner {
+        uint256 balance = address (this).balance;
+        payable (_receiver).transfer(balance);
+    }
+
+    // The following functions are overrides required by Solidity.
+
+    function _update(address to, uint256 tokenId, address auth)
+        internal
+        override(ERC721, ERC721Enumerable, ERC721Pausable)
+        returns (address)
+    {
+        return super._update(to, tokenId, auth);
+    }
+
+    function _increaseBalance(address account, uint128 value)
+        internal
+        override(ERC721, ERC721Enumerable)
+    {
+        super._increaseBalance(account, value);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, ERC721Enumerable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+}
